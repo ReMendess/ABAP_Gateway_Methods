@@ -1,0 +1,67 @@
+ method SCARRSET_GET_ENTITYSET.
+
+
+
+*   Variavel de importação do tipo retorno do método get_filter_select_options( )
+*   do metodo de retorno da método get_filter
+*   da classe /IWBEP/IF_MGW_REQ_ENTITYSET
+    DATA: filter_select_options TYPE  /iwbep/t_mgw_select_option,
+          range_carrid          TYPE RANGE OF scarr-carrid,
+          range_carrname        TYPE RANGE OF scarr-carrname,
+          wa_carrid             LIKE LINE OF range_carrid,
+          wa_carrname           LIKE LINE OF range_carrname,
+          sortorder             TYPE    abap_sortorder_tab.
+
+* $filter
+    filter_select_options = io_tech_request_context->get_filter( )->get_filter_select_options( ).
+    LOOP AT filter_select_options ASSIGNING FIELD-SYMBOL(<filter_select_options>).
+
+      LOOP AT <filter_select_options>-select_options
+      ASSIGNING FIELD-SYMBOL(<select_options>).
+        CASE <filter_select_options>-property.
+*        Campo ABAP definido na sua entity que pode ser filtravel
+          WHEN 'CARRID'.
+*          Como a estrutura do field symbols <filter_select_options>
+*          tem a estrutura de um range
+            MOVE-CORRESPONDING <select_options> TO wa_carrid.
+            APPEND wa_carrid TO range_carrid.
+
+          WHEN 'CARRNAME'.
+            MOVE-CORRESPONDING <select_options> TO wa_carrname.
+            APPEND wa_carrname TO range_carrname.
+        ENDCASE.
+      ENDLOOP.
+
+    ENDLOOP.
+
+
+    SELECT
+      carrid
+      carrname
+      currcode
+      url
+      INTO CORRESPONDING FIELDS OF TABLE et_entityset
+      FROM scarr
+      WHERE carrid IN range_carrid AND
+            carrname IN range_carrname.
+
+*$Ordeby
+    LOOP AT it_order ASSIGNING FIELD-SYMBOL(<order>).
+
+      APPEND INITIAL LINE TO sortorder ASSIGNING FIELD-SYMBOL(<sortorder>).
+
+      <sortorder>-name = <order>-property.
+
+      IF <order>-order = 'desc'.
+        <sortorder>-descending = abap_true.
+      ENDIF.
+
+    ENDLOOP.
+
+
+    SORT et_entityset BY (sortorder).
+
+
+
+
+  endmethod.
