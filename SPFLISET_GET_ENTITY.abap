@@ -1,0 +1,57 @@
+  method SPFLISET_GET_ENTITY.
+
+DATA: lv_carrid TYPE spfli-carrid,
+      lv_connid TYPE spfli-connid.
+
+* recebe a chaves que fora passadas,
+* que chegam na classe io_tech_request_context keys
+    DATA(keys) = io_tech_request_context->get_keys( ).
+* Realizar a leitura do campo chave CARRID,
+* da Nossa entidade
+    READ TABLE keys ASSIGNING FIELD-SYMBOL(<key>)
+    WITH KEY name = 'CARRID'.
+    IF <key> IS ASSIGNED.
+      lv_carrid = <key>-value.
+    ELSE.
+* Caso a requisição HTTP, não tenha passado a chave
+* incorreta retorna um erro
+      RAISE EXCEPTION TYPE /iwbep/cx_mgw_tech_exception.
+    ENDIF.
+
+* Realizar a leitura do campo chave CARRID,
+* da Nossa entidade
+    READ TABLE keys ASSIGNING <key>
+    WITH KEY name = 'CONNID'.
+    IF <key> IS ASSIGNED.
+      lv_connid = <key>-value.
+    ELSE.
+* Caso a requisição HTTP, não tenha passado a chave
+* incorreta retorna um erro
+      RAISE EXCEPTION TYPE /iwbep/cx_mgw_tech_exception.
+    ENDIF.
+
+* realizar a busca na tabela com a chave
+    SELECT SINGLE
+    carrid,
+    connid,
+    countryfr,
+    cityfrom,
+    airpfrom,
+    countryto,
+    cityto,
+    airpto,
+    fltime,
+    deptime,
+    arrtime,
+    distance,
+    distid,
+    fltype,
+    period
+  INTO @DATA(wa_spfli)
+  FROM spfli
+  WHERE carrid EQ @lv_carrid
+    AND connid EQ @lv_connid.
+
+
+
+  endmethod.
