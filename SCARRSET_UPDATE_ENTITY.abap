@@ -1,0 +1,27 @@
+  method SCARRSET_UPDATE_ENTITY.
+
+  DATA: ws_entity TYPE zcl_zpssilva_gw_mpc=>ts_scarr.
+
+    io_data_provider->read_entry_data(
+      IMPORTING
+        es_data = ws_entity
+    ).
+
+    IF ws_entity-carrid IS INITIAL.
+      RAISE EXCEPTION TYPE /iwbep/cx_mgw_busi_exception
+        EXPORTING
+          textid            = /iwbep/cx_mgw_busi_exception=>business_error
+          message_container = me->mo_context->get_message_container( )
+          message           = 'Dados Obrigatórios não informados.'.
+
+    ELSE.
+
+      UPDATE scarr FROM ws_entity.
+
+      IF sy-subrc IS INITIAL.
+        er_entity = ws_entity.
+      ENDIF.
+
+    ENDIF.
+
+  endmethod.
