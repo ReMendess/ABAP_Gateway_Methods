@@ -1,0 +1,47 @@
+  method SCARRSET_CREATE_ENTITY.
+
+DATA:   ti_scarr  TYPE STANDARD TABLE OF scarr,
+        ws_entity TYPE zcl_zpssilva_gw_mpc=>ts_scarr.
+
+
+    io_data_provider->read_entry_data(
+      IMPORTING
+        es_data = ws_entity
+    ).
+
+    IF ws_entity-carrid IS INITIAL.
+      RAISE EXCEPTION TYPE /iwbep/cx_mgw_busi_exception
+        EXPORTING
+          textid            = /iwbep/cx_mgw_busi_exception=>business_error
+          message_container = me->mo_context->get_message_container( )
+          message           = 'Dados Obrigatórios não informados.'.
+
+    ELSE.
+      SELECT SINGLE carrid FROM scarr INTO @DATA(lv_carrid)
+        WHERE carrid EQ @ws_entity-carrid.
+
+      IF sy-subrc IS INITIAL.
+        RAISE EXCEPTION TYPE /iwbep/cx_mgw_busi_exception
+          EXPORTING
+            textid            = /iwbep/cx_mgw_busi_exception=>business_error
+            message_container = me->mo_context->get_message_container( )
+            message           = |Companhia Aérea: { ws_entity-carrid } ja cadastrada|.
+
+      ELSE.
+
+        INSERT scarr FROM ws_entity.
+
+        IF sy-subrc IS INITIAL.
+          er_entity = ws_entity.
+        ENDIF.
+
+      ENDIF.
+
+
+    ENDIF.
+
+
+
+
+
+  endmethod.
